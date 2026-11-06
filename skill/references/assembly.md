@@ -1,21 +1,22 @@
 # Assembling a final film from heterogeneous pieces
 
-Lessons from `final-film/build.sh`, which combines a Three.js/Playwright console film (Part A), five
-Blender/Cycles shots (Part B, B1-B5), and Playwright-rendered caption/title cards into one muxed MP4
-in two languages. Paths below are relative to `~/git/personal/angels-sim/` unless stated otherwise.
-The build never modifies any source track — it only reads from `ezekiel-part-a-v2/out/`,
-`ezekiel-ophanim-v7/out/{final,final_v2}/` and `ezekiel-encounter/text/`, and writes under
-`final-film/` (source: `final-film/BUILD.md:12-15`).
+Lessons from the final-assembly script of "The Wheels of Ezekiel" (write-up:
+https://renanspatin.com/en/blog/ofanim-ezequiel), which combines a Three.js/Playwright console film
+(Part A), five Blender/Cycles shots (Part B, B1-B5), and Playwright-rendered caption/title cards into
+one muxed MP4 in two languages. The script itself isn't included here; its own build log
+(`evidence/assembly-BUILD.md`) is, and most citations below point into that. The build never modifies
+any source track — it only reads from the Part A and Part B output folders and writes under its own
+output directory (source: `evidence/assembly-BUILD.md:12-15`).
 
 ## Caption overlays: transparent PNG + alpha-fade composite
 
 Captions are rendered once as transparent 1080×1350 PNGs with Playwright + a cached Chromium, reusing
 the same fonts and palette as the upstream Part A overlay (Cormorant Garamond italic 500 / normal 600,
 JetBrains Mono 600, `#f6eedf` ivory, `#ffd27a` gold accent) — base64-embedded fonts read once into
-`work/fonts_b64.json` so the render is deterministic and offline (source: `final-film/BUILD.md:31-36`).
+`work/fonts_b64.json` so the render is deterministic and offline (source: `evidence/assembly-BUILD.md:31-36`).
 They are composited onto the B-shot video with ffmpeg's `overlay` filter, fading the caption on its
 **alpha channel** (0.4 s in/out) — not `drawtext` — specifically so the real glyphs render, not a
-built-in font substitute (source: `final-film/BUILD.md:40-45`).
+built-in font substitute (source: `evidence/assembly-BUILD.md:40-45`).
 
 ### The `-loop 1` bug
 
@@ -32,7 +33,7 @@ renders fully transparent for the **entire** clip, every frame, because there is
 advance the fade. The symptom is silent: ffmpeg exits 0, the output file is a plausible size, and the
 caption is simply invisible throughout. This bit the first build and was only caught by reading an
 actual decoded frame of the composited output, not by trusting the exit code (source:
-`final-film/BUILD.md:43-45`). **Verification rule that generalizes:** a zero-exit-code ffmpeg run on a
+`evidence/assembly-BUILD.md:43-45`). **Verification rule that generalizes:** a zero-exit-code ffmpeg run on a
 filter graph with a still-image input and a time-based fade is not evidence the fade is doing
 anything — read a frame.
 
@@ -40,13 +41,14 @@ anything — read a frame.
 
 Part A → B1 **crossfades** (0.5 s `xfade`). Every other B-to-B transition (B1→B2→B3→B4→B5) is a
 **hard cut** via `concat`, not a dissolve, even though the brief allowed a 0.25-0.4 s dissolve
-(source: `final-film/BUILD.md:60`). Reason: each B-shot carries its own caption block (different
+(source: `evidence/assembly-BUILD.md:60`). Reason: each B-shot carries its own caption block (different
 title, different verse quote). A 0.3 s dissolve was tried first between every B-shot; during the
 dissolve window the outgoing shot's caption and the incoming shot's caption are both partially opaque
 and literally overlap — two paragraphs of text double-exposed, unreadable (source:
-`final-film/BUILD.md:62-65`). Part A→B1 can still crossfade because Part A's **own** caption has
+`evidence/assembly-BUILD.md:62-65`). Part A→B1 can still crossfade because Part A's **own** caption has
 already faded out by the time that dissolve starts — checked at the actual crossfade frame, not
-assumed (source: `final-film/BUILD.md:67-68`, `frames/qa/f05_t17.75.png`).
+assumed (source: `evidence/assembly-BUILD.md:65-68`; a supporting frame capture from the original
+build session is not reproduced here — unverified beyond the text).
 
 **Rule:** a dissolve is safe between two shots that have no on-screen text overlapping in time at the
 cut point. If both sides carry independent caption blocks, cut hard.
@@ -55,20 +57,23 @@ cut point. If both sides carry independent caption blocks, cut hard.
 
 The Blender B-shot frames do **not** keep the wheel/figure confined to any fixed top/bottom band — so
 each shot's caption layout was chosen by reading actual rendered frames, not assumed from camera
-parameters (source: `final-film/SHOTLIST.md:28-31`). Each of B1-B5 got its own layout decision (e.g.
-B3 moves the whole caption stack to the bottom band because the eye texture fills the entire top band
-edge-to-edge in both the first and last frame of that shot — source: `final-film/SHOTLIST.md:40-43`).
-After a re-shoot (B4/B5 went from `out/final/` to `out/final_v2/`), the layout was **re-verified
-against the new footage**, not left as-is on the assumption that "it worked before" (source:
-`final-film/SHOTLIST.md:44-52`). Verification method: composite the caption PNG over the actual
+parameters (source: private project document, excerpt below — a per-shot layout log, not included
+here, states each shot's reserved caption band and why). Each of B1-B5 got its own layout decision
+(e.g. one shot moves the whole caption stack to the bottom band because the eye texture fills the
+entire top band edge-to-edge in both the first and last frame of that shot — source: private project
+document, excerpt above). After a re-shoot of two of the five shots, the layout was **re-verified
+against the new footage**, not left as-is on the assumption that "it worked before" (source: private
+project document, excerpt above). Verification method: composite the caption PNG over the actual
 first/mid/last frame of each shot, including both hard-cut boundaries into and out of the re-shot
-shots, and read the result from the **final muxed MP4** (source: `final-film/SHOTLIST.md:54-57`,
-frames kept at `frames/v2check/` and `frames/qa2/`).
+shots, and read the result from the **final muxed MP4** (source: private project document, excerpt
+above; the frame captures used for that check are not reproduced here — unverified beyond the
+description).
 
 ## Hook/end card variants without re-rendering anything upstream
 
 `HOOK_VARIANT=<name> ./build.sh` changes only the hook and end card **text**, never the Part A/B
-footage, never the audio mix. Mechanism (source: `final-film/build.sh:24-73`, `BUILD.md:116-126`):
+footage, never the audio mix. Mechanism (source: `evidence/assembly-BUILD.md:116-126`; the script
+itself isn't included here, but its own build log describes the mechanism in full):
 
 1. The variant branch is checked at the very top of the script, **before** the normal pipeline's
    "sources" step.
@@ -82,7 +87,7 @@ footage, never the audio mix. Mechanism (source: `final-film/build.sh:24-73`, `B
    and every other variant — then exits before reaching the normal 6-step pipeline.
 
 This was verified, not assumed: the project hashed every prior output file with `shasum -a 256` before
-and after running a variant, and confirmed they were byte-identical (source: `final-film/BUILD.md:124`).
+and after running a variant, and confirmed they were byte-identical (source: `evidence/assembly-BUILD.md:123-124`).
 **Generalizable pattern:** when a downstream asset only changes a small text/graphic layer, cache the
 expensive intermediate (the fully assembled "core" before text/branding) once, and make every variant
 branch early, reuse the cache, and write to a variant-specific output filename — never a shared one.
@@ -92,7 +97,7 @@ branch early, reuse the cache, and write to a variant-specific output filename �
 Two new stems are synthesized with the **same** synthesis kit Part A's own score uses
 (`~/.claude/skills/teardown/sfx/`: `pad`, `chime`, `bandnoise`, plus `drone`/`shimmer`/`roll` ported
 from Part A's `score.py`) — a room-tone swell for the hook, a Part B bed with a sub impact on the B1
-reveal, a shimmer on B3's eyes, a roll under B4, a hush at B5 (source: `final-film/BUILD.md:48-52`).
+reveal, a shimmer on B3's eyes, a roll under B4, a hush at B5 (source: `evidence/assembly-BUILD.md:48-52`).
 **Part A's own rendered score is reused unmodified**, not re-synthesized (source: same section,
 "Part A's own score ... is reused unmodified"). All three stems are placed with `adelay` at their
 timeline offsets and `amix`ed, then mastered with ffmpeg's `loudnorm` filter in **two passes**:
@@ -105,7 +110,9 @@ ffmpeg -i premix.wav -af "loudnorm=I=-14:TP=-1:LRA=11:measured_I=...:measured_TP
   -ar 48000 -ac 2 mastered.wav
 ```
 
-Target: I=−14 LUFS, TP=−1 dBFS, LRA=11 (source: `final-film/BUILD.md:55`, `build.sh:126-139`).
+Target: I=−14 LUFS, TP=−1 dBFS, LRA=11 (source: `evidence/assembly-BUILD.md:55`; the exact
+pass-1/pass-2 ffmpeg invocations are a private project script, excerpt above — the code block
+reproduces the actual pattern used).
 `linear=true` on pass 2 applies the exact measured gain rather than re-running the (slightly
 nonlinear) dynamic algorithm a second time — use the measured values from pass 1, don't just run
 `loudnorm` once and hope the one-pass dynamic version lands on target.
@@ -116,16 +123,17 @@ nonlinear) dynamic algorithm a second time — use the measured values from pass
 core  = (16.0 + 5.0 − 0.5) + 4.0 + 4.0 + 4.0 + 4.0 = 36.5 s   # Part A + B1, minus the 0.5s xfade overlap, + B2..B5
 total = 2.5 (hook) + core − 0.5 (hook→core xfade) + 3.0 (end, hard cut) = 41.5 s
 ```
-(source: `final-film/BUILD.md:70-77`). Every `-t` / `offset=` value passed to ffmpeg in `build.sh`
-should be derivable from a sum like this; if it isn't, the duration drifted from what the shot list
-says it should be and something upstream changed without the script being updated.
+(source: `evidence/assembly-BUILD.md:70-77`). Every `-t` / `offset=` value passed to ffmpeg in the
+assembly script should be derivable from a sum like this; if it isn't, the duration drifted from what
+the shot list says it should be and something upstream changed without the script being updated.
 
 ## Verification
 
 - **Read frames at every cut** — both hard cuts and the one crossfade — composited with their real
-  captions, not a synthetic test pattern (source: `final-film/SHOTLIST.md:54-57`).
+  captions, not a synthetic test pattern (source: private project document, excerpt above — the same
+  per-shot layout log cited in "Keeping caption bands clear of the subject" above).
 - **Duration**, measured directly, not computed: `ffprobe -show_entries format=duration -v quiet -of csv=p=0 final-film-en.mp4` → must match the shot list's stated total (source:
-  `comparison-v2/NUMBERS.md:87`, "measured directly ... → `41.500000`").
+  `evidence/comparison-NUMBERS.md:87`, "measured directly ... → `41.500000`").
 - Loudness was verified via `loudnorm`'s own two-pass measurement (`print_format=json` on pass 1,
   `print_format=summary` on pass 2), not the separate `ebur128` filter — **no source document in this
   project names `ebur128` specifically**; if your pipeline wants an independent post-hoc loudness

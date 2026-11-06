@@ -6,10 +6,12 @@ description: Produce video and 3D visuals (explainers, cinematic scenes, social 
 # Video + 3D production
 
 One job, four ways to do it. This skill picks the way, then gives the working recipe, the cost gate and the checks.
-Everything marked *measured* comes from the `angels-sim` project (Ezekiel's wheels, built two ways, Nov 2026):
-Three.js console 36 min build + 82 s capture for a 16 s film; Blender 504 frames, 4.13 h of render on an Apple M4,
-29 s/frame average. **The AI-video column is research, not experience**: the author never ran a video model
-(see `references/ai-video.md`, §0 and §6).
+Everything marked *measured* comes from one real project, built two ways (a Three.js console and a Blender/Cycles
+film of the same subject, Nov 2026; see `evidence/` and the write-up at
+https://renanspatin.com/en/blog/ofanim-ezequiel): Three.js console 36 min build + 82 s capture for a 16 s film
+(`evidence/threejs-partA-METRICS.md`); Blender 504 frames, 4.13 h of render on an Apple M4, 29 s/frame average
+(`evidence/blender-v7-METRICS.md`). **The AI-video column is research, not experience**: the author never ran a
+video model (see `references/ai-video.md`, §0 and §6).
 
 ## 1. Brief (answer in writing before choosing)
 - **Job:** explain a mechanism, cinematic hero/encounter, organic/human motion, atmospheric B-roll, product shot, quick social cut.

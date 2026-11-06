@@ -1,4 +1,4 @@
-# AI video generation — state as of 2026-11-06 (for the media-skills skill)
+# AI video generation — state as of 2026-11-06 (for the video-3d-production skill)
 
 Research date 2026-11-06. Read-only: no logins, no paid API calls, no scraping behind
 logins. Tags: **V**=VERIFIED (I read it on a public official page), **R**=REPORTED
@@ -10,7 +10,9 @@ citations are `[n]`. All access dates are 2026-11-06 unless noted.
 
 The user has a Blender/Cycles cinematic (504 frames, 4.13h render on an M4, 29s/frame,
 flaws in the prostrate figure and in crystal/fire) and a Three.js interactive console
-(36 min build, 82s capture for 16s) — both measured in `angels-sim`. They never ran an
+(36 min build, 82s capture for 16s) — both measured on one real project, "The Wheels of
+Ezekiel" (write-up: https://renanspatin.com/en/blog/ofanim-ezequiel; see `evidence/` in this
+skill for the underlying metrics). They never ran an
 AI video model: they chose not to spend on one for that project. Their Gemini API key
 does list video-capable models (`gemini-omni-1.1-flash` and `gemini-omni-1.2-flash`, both with
 `generateContent`; checked 2026-11-06), but the skill author never called them, so whether they
@@ -76,14 +78,14 @@ atmosphere, texture, and "plausible generic motion" shots where exactness doesn'
 | **(b) Video-to-video restyle of a 3D render** | Runway Aleph 2.0: reads up to 30s/16MB source, up to 5 keyframe edits, preserves camera move/timing while changing look; reconstructs scene depth/normals from 2D footage [17] (R). Wan VACE (ComfyUI, local): depth maps (Depth Anything v2) + pose drive a target video while a reference image sets identity/style [16] (R). | Stacking multiple style changes in one pass causes drift — do one transformation per render, chain renders [17] (R). VACE frame-count math is strict: `length − 1` divisible by 4, dimensions divisible by 16, or frames get cut off [16] (R, GitHub discussion). | Aleph: reported 2–4 min per pass, stretches at peak hours [17] (R). VACE: free/local but needs a capable GPU and ComfyUI setup. | Runway Aleph (API or DaVinci Resolve plugin); Wan 2.1/2.2 + VACE in ComfyUI | Render a Blender crystal/fire shot flat and under-lit (faster), restyle lighting/material look with Aleph in one pass rather than re-rendering Cycles. |
 | **(c) AI-generated plates (sky/fire/water) composited behind/around 3D** | **Documentary evidence is thin.** Only vendor guidance found: prompt for pure sky with no ground/horizon, specify sun direction to match the plate, expect banding on smooth gradients (add grain/haze) [vendor, R]. | Lightning/sudden events smear in a single AI-generated take — generate several short takes and pick the cleanest [vendor, R]. | Not quantified. | No Blender-compositor- or ffmpeg-specific documented workflow found for this. | **Data gap — no concrete documented Blender/ffmpeg compositing workflow found.** This would need to be built and tested, not assumed from AI-video vendor docs alone. |
 | **(d) 3D as camera/layout/previs for AI video** | No dedicated documented workflow found distinct from (a)/(b) — i.e., using a 3D scene purely as a camera/blocking reference (not a literal first frame) for an AI shot. | — | — | — | **Data gap.** The closest documented analogue is VACE's depth/pose control (c) above, repurposed with depth/pose rendered out of Blender instead of extracted from real footage — plausible by extension of (b)'s mechanics, but **not found as a described workflow; mark this specific combination INFERRED (I), unverified.** |
-| **(e) AI upscaling/interpolation to cut Blender render time** | Render fewer frames at lower resolution, then interpolate + upscale. One documented case (3ds Max, not Blender, via Topaz): full-HD-vs-4K render is ~4× faster, and the presenter estimates ~6% of full-res cost combining 4× interpolation + 2× upscale; interpolating every 2nd frame "looked fine," every 4th/8th was less reliable; scenes with slow camera moves held up even at every 16th frame [19] (R). | **Fast rotation is explicitly a failure mode**: RIFE (flow-based) is documented to struggle with large motion and disocclusion — both present in fast rotation — producing artifacts in revealed/occluded regions [20] (R, arXiv-sourced claim via secondary source). Busy, fast-moving regions need to be rendered in full, not interpolated [19] (R). Forum anecdotes report quality regressions between RIFE point versions (4.15/4.16 vs 4.17), i.e. this is a moving target, not a fixed guarantee [20] (R, forum anecdote, weak). | Potentially the biggest time win of any hybrid here (up to ~16×), but untested on Blender/Cycles specifically and untested on the user's own crystal/fire/wheel-rotation content. | Topaz Video AI (upscale+interpolation), RIFE / FILM (open interpolation models) | Render the `angels-sim` wheel-rotation shot at every 4th frame and 1080p instead of every frame at full res, then RIFE-interpolate and Topaz-upscale — **but test the wheel's fast rotation specifically first**, since that is the documented weak case. |
+| **(e) AI upscaling/interpolation to cut Blender render time** | Render fewer frames at lower resolution, then interpolate + upscale. One documented case (3ds Max, not Blender, via Topaz): full-HD-vs-4K render is ~4× faster, and the presenter estimates ~6% of full-res cost combining 4× interpolation + 2× upscale; interpolating every 2nd frame "looked fine," every 4th/8th was less reliable; scenes with slow camera moves held up even at every 16th frame [19] (R). | **Fast rotation is explicitly a failure mode**: RIFE (flow-based) is documented to struggle with large motion and disocclusion — both present in fast rotation — producing artifacts in revealed/occluded regions [20] (R, arXiv-sourced claim via secondary source). Busy, fast-moving regions need to be rendered in full, not interpolated [19] (R). Forum anecdotes report quality regressions between RIFE point versions (4.15/4.16 vs 4.17), i.e. this is a moving target, not a fixed guarantee [20] (R, forum anecdote, weak). | Potentially the biggest time win of any hybrid here (up to ~16×), but untested on Blender/Cycles specifically and untested on the user's own crystal/fire/wheel-rotation content. | Topaz Video AI (upscale+interpolation), RIFE / FILM (open interpolation models) | Render the project's own wheel-rotation shot at every 4th frame and 1080p instead of every frame at full res, then RIFE-interpolate and Topaz-upscale — **but test the wheel's fast rotation specifically first**, since that is the documented weak case. |
 
 ## 4. Decision guide
 
-Three.js measured in `angels-sim`: 36 min build + 82s capture for a 16s clip, exact/
-controllable. Blender measured in `angels-sim`: 504 frames, 4.13h render, 29s/frame avg,
+Three.js measured on the project (see `evidence/threejs-partA-METRICS.md`): 36 min build + 82s capture for a 16s clip, exact/
+controllable. Blender measured on the project (see `evidence/blender-v7-METRICS.md`): 504 frames, 4.13h render, 29s/frame avg,
 8.6h naive estimate vs ~3.8h with tricks; two renders at once hang both; a 9GB swap
-stalled a chunk. These are **(measured in angels-sim)** throughout.
+stalled a chunk. These are **(measured on one real project, see `evidence/`)** throughout.
 
 | Job type | First pick | Why | Fallback |
 |---|---|---|---|
@@ -118,18 +120,20 @@ renders at once on this hardware (both hang) and watch memory/swap on large scen
   C2PA metadata (reportedly persists) [12]; no SynthID/C2PA information found for Kling,
   Runway, Luma, Hailuo, or Seedance — **gap**.
 
-**Religious/sacred imagery — do not re-derive, cite `~/git/personal/angels-sim/research/catholic-x-en.md`
-directly** (that file's own tags preserved, access date 2026-11-05 per that file):
-- Climate is "strongly negative, with papal backing": Pope Leo XIV's 2026-10-02 post called
-  AI output not art ("ontological difference... algorithms lack the spark of humanity")
-  (that file: VERIFIED text, REPORTED reach numbers) — *catholic-x-en.md* §4.
-- The single strongest documented backlash pattern is AI imagery entering **veneration or
-  liturgy** (the Belarus AI icon) — *catholic-x-en.md* §4.
-- The file's own recommended framing, directly applicable to any skill output: **never**
-  call AI-assisted output "art," "icon," "sacred art," or anything for prayer/veneration;
-  disclose the AI role **concretely** (what was AI vs. human-made, not vague "AI-assisted"
-  language, which reads as evasive); state the human-made parts precisely (geometry
-  modeled by hand, motion coded by hand, etc.) — *catholic-x-en.md* §4, §6.
+**Religious/sacred imagery** (source: a private research document, not included in this repo and not
+re-derived here; access date 2026-11-05 per that document — treat the three points below as
+**unverified** against any evidence copied into this skill, carried over from that earlier research
+pass rather than re-checked):
+- Climate is reported as "strongly negative, with papal backing": Pope Leo XIV's 2026-10-02 post
+  called AI output not art ("ontological difference... algorithms lack the spark of humanity")
+  (that document: VERIFIED text, REPORTED reach numbers).
+- The single strongest documented backlash pattern reported is AI imagery entering **veneration or
+  liturgy** (the Belarus AI icon).
+- The recommended framing, directly applicable to any skill output: **never** call AI-assisted
+  output "art," "icon," "sacred art," or anything for prayer/veneration; disclose the AI role
+  **concretely** (what was AI vs. human-made, not vague "AI-assisted" language, which reads as
+  evasive); state the human-made parts precisely (geometry modeled by hand, motion coded by hand,
+  etc.).
 
 ## 6. How to check what you can use — and a hard rule
 
@@ -183,5 +187,5 @@ Access date 2026-11-06 for all unless stated otherwise.
 21. terms.law/ai-output-rights/runway, adtestbench.com/tools/kling, journal.everypixel.com/ai-video-commercial-use, hackernoon.com/can-you-use-ai-generated-video-commercially (R)
 22. docs.cloud.google.com/gemini-enterprise-agent-platform/models/video/responsible-ai-and-usage-guidelines, discuss.ai.google.dev forum threads (R, forum reports are anecdotal)
 23. storrito.com/resources/tiktoks-2026-ai-labeling-rules, thenextweb.com/news/youtube-will-now-automatically-label-ai-generated-videos, billo.app/blog/ai-labeling (R)
-24. `~/git/personal/angels-sim/research/catholic-x-en.md` — local file, own tags preserved, access date 2026-11-05 (mixed V/R/I per that file)
+24. a private research document (not included in this repo), own tags preserved, access date 2026-11-05 (mixed V/R/I per that document); the three bullet points in §5 sourced to it are carried over, not re-verified, and should be treated as unverified
 25. Gemini API official authentication reference, as surfaced via search snippet quoting "all requests to the Gemini API must include an x-goog-api-key header" — not independently fetched in full (R, but the `?key=` query-param form was independently V-confirmed via ref 3)
