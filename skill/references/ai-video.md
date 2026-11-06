@@ -121,9 +121,10 @@ renders at once on this hardware (both hang) and watch memory/swap on large scen
   Runway, Luma, Hailuo, or Seedance — **gap**.
 
 **Religious/sacred imagery** (source: a private research document, not included in this repo and not
-re-derived here; access date 2026-11-05 per that document — treat the three points below as
-**unverified** against any evidence copied into this skill, carried over from that earlier research
-pass rather than re-checked):
+re-derived here). The first two points below were re-checked on 2026-11-06 against public news
+(PhillyVoice, 2026-10-02, on the papal post; Meduza, 2026-10-13, on the Belarus blessing of an
+AI-generated icon on 2026-10-11): VERIFIED that both happened, REPORTED for reach and reactions. The
+third is a recommendation, INFERRED:
 - Climate is reported as "strongly negative, with papal backing": Pope Leo XIV's 2026-10-02 post
   called AI output not art ("ontological difference... algorithms lack the spark of humanity")
   (that document: VERIFIED text, REPORTED reach numbers).
