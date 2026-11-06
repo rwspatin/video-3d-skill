@@ -33,7 +33,7 @@ than a product comparison.
 ## Install
 
 ```bash
-git clone <this-repo-url> video-3d-skill
+git clone https://github.com/rwspatin/video-3d-skill.git video-3d-skill
 ln -s "$PWD/video-3d-skill/skill" ~/.claude/skills/video-3d-production
 ```
 
